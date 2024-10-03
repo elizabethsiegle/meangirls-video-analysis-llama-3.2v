@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "webm-muxer": "^5.0.2"
+  }
+}

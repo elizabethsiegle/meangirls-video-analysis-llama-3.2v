@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mean Girls Video Recorder</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #FFD1DC; /* Light pink background */
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .flower {
+            position: fixed;
+            font-size: 40px;
+            z-index: 1;
+        }
+        .flower1 { top: 20px; left: 20px; }
+        .flower2 { top: 20px; right: 20px; }
+        .flower3 { bottom: 60px; left: 20px; }
+        .flower4 { bottom: 60px; right: 20px; }
+        .flower5 { top: 50%; left: 10px; transform: translateY(-50%); }
+        .flower6 { top: 50%; right: 10px; transform: translateY(-50%); }
+        h1 {
+            color: #FF69B4; /* Hot pink color for the title */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        h1::before, h1::after {
+            content: '💖';
+            margin: 0 10px;
+        }
+        .video-container {
+            width: 640px;
+            height: 480px;
+            margin: 20px auto;
+            border: 5px solid #FF69B4;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255,105,180,0.5);
+        }
+        #videoElement, #flowerCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #flowerCanvas {
+            pointer-events: none;
+        }
+        #textOverlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            border-radius: 5px;
+        }
+        #toggleButton {
+            font-size: 18px;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #toggleButton:hover {
+            background-color: #FF1493;
+            transform: translateY(-2px);
+        }
+        #toggleButton:active {
+            transform: translateY(0);
+        }
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #FF69B4;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .footer::before {
+            content: '🌟';
+            margin-right: 5px;
+        }
+        .footer::after {
+            content: '🌟';
+            margin-left: 5px;
+        }
+        .flower-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background-image: repeating-linear-gradient(90deg, #FF69B4, #FF69B4 20px, transparent 20px, transparent 40px);
+            opacity: 0.5;
+        }
+        .flower-border::before {
+            content: '🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼';
+            position: absolute;
+            top: 5px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flower-border"></div>
+    <div class="flower flower1">🌸</div>
+    <div class="flower flower2">🌺</div>
+    <div class="flower flower3">🌼</div>
+    <div class="flower flower4">🌻</div>
+    <div class="flower flower5">🌷</div>
+    <div class="flower flower6">🌹</div>
+    <h1>Mean Girls Video Recorder</h1>
+    <div class="video-container">
+        <video id="videoElement" autoplay muted></video>
+        <canvas id="flowerCanvas"></canvas>
+        <div id="textOverlay"></div>
+    </div>
+    <button id="toggleButton">Start</button>
+
+    <div class="footer">
+        made with ❤️ in sf with cloudflare workers ai
+    </div>
+
+    <script>
+    let isCapturing = false;
+    let captureInterval;
+    const videoElement = document.getElementById('videoElement');
+    const toggleButton = document.getElementById('toggleButton');
+    const textOverlay = document.getElementById('textOverlay');
+    const flowerCanvas = document.getElementById('flowerCanvas');
+    const flowerCtx = flowerCanvas.getContext('2d');
+
+    function updateTextOverlay(message) {
+        textOverlay.innerHTML = message;
+    }
+
+    async function initializeCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            await new Promise((resolve) => {
+                videoElement.onloadedmetadata = () => {
+                    videoElement.play();
+                    resolve();
+                };
+            });
+            console.log('Camera initialized');
+        } catch (error) {
+            console.error('Error initializing camera:', error);
+            updateTextOverlay("Error initializing camera: " + error.message);
+        }
+    }
+
+    function drawFlowerEmojis() {
+        flowerCanvas.width = videoElement.videoWidth;
+        flowerCanvas.height = videoElement.videoHeight;
+        flowerCtx.clearRect(0, 0, flowerCanvas.width, flowerCanvas.height);
+
+        const flowerCount = 10;
+        const flowerEmojis = ['🌸', '🌺', '🌼', '🌻', '🌷', '🌹'];
+        const fontSize = 20; // Smaller size for emojis
+
+        flowerCtx.font = `${fontSize}px Arial`;
+
+        for (let i = 0; i < flowerCount; i++) {
+            const x = Math.random() * (flowerCanvas.width - fontSize);
+            const y = Math.random() * (flowerCanvas.height - fontSize) + fontSize;
+            const emoji = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+
+            flowerCtx.fillText(emoji, x, y);
+        }
+    }
+
+    async function startCapture() {
+        if (!videoElement.srcObject) {
+            await initializeCamera();
+        }
+        
+        console.log('Video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+        
+        drawFlowerEmojis(); // Draw initial flower emojis
+
+        function captureAndSendFrame() {
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                const canvas = document.createElement('canvas');
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                
+                updateTextOverlay("Frame captured at " + new Date().toISOString());
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('frame', blob, 'frame.jpg');
+                    
+                    try {
+                        const response = await fetch('/analyze-video', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        console.log('Analysis result:', result);
+                        
+                        let analysisText = '';
+                        if (typeof result === 'object' && result !== null) {
+                            if (result.response) {
+                                analysisText = result.response;
+                            } else if (result.text) {
+                                analysisText = result.text;
+                            } else {
+                                analysisText = JSON.stringify(result);
+                            }
+                        } else {
+                            analysisText = String(result);
+                        }
+                        
+                        updateTextOverlay(analysisText || "No analysis available");
+                    } catch (error) {
+                        console.error('Error sending frame for analysis:', error);
+                        updateTextOverlay("Error: " + error.message);
+                    }
+                }, 'image/jpeg');
+
+                drawFlowerEmojis(); // Redraw flower emojis for each frame
+            }
+        }
+
+        isCapturing = true;
+        captureAndSendFrame(); // Capture first frame immediately
+        captureInterval = setInterval(captureAndSendFrame, 30000); // Then every 30 seconds
+    }
+
+    function stopCapture() {
+        if (isCapturing) {
+            clearInterval(captureInterval);
+            isCapturing = false;
+            updateTextOverlay("Capture stopped");
+        }
+    }
+
+    toggleButton.addEventListener('click', () => {
+        if (isCapturing) {
+            stopCapture();
+            toggleButton.textContent = 'Start';
+        } else {
+            startCapture();
+            toggleButton.textContent = 'Stop';
+        }
+    });
+
+    // Initialize camera when the page loads
+    initializeCamera();
+
+    // Initial text
+    updateTextOverlay("Click 'Start' to begin capture");
+    </script>
+</body>
+</html>
