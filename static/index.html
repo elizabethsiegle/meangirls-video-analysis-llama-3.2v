@@ -143,10 +143,10 @@
         <canvas id="flowerCanvas"></canvas>
         <div id="textOverlay"></div>
     </div>
-    <button id="toggleButton">Start</button>
+    <button id="toggleButton">start✨</button>
 
     <div class="footer">
-        made with ❤️ in sf with cloudflare workers ai
+        made with ❤️ in sf with <a href="https://developers.cloudflare.com/workers/ai/">cloudflare workers ai</a>. <br><a href="https://github.com/elizabethsiegle/meangirls-video-analysis-llama-3.2v">see code here</a>
     </div>
 
     <script>
@@ -272,10 +272,10 @@
     toggleButton.addEventListener('click', () => {
         if (isCapturing) {
             stopCapture();
-            toggleButton.textContent = 'Start';
+            toggleButton.textContent = 'start✨!';
         } else {
             startCapture();
-            toggleButton.textContent = 'Stop';
+            toggleButton.textContent = 'stop✋';
         }
     });
 
